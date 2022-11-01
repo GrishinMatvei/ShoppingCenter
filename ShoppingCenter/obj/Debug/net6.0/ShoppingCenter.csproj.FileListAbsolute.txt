@@ -50,3 +50,10 @@ C:\Users\SP4-IVC\Desktop\ShoppingCenter\obj\Debug\net6.0\refint\ShoppingCenter.d
 C:\Users\SP4-IVC\Desktop\ShoppingCenter\obj\Debug\net6.0\ShoppingCenter.pdb
 C:\Users\SP4-IVC\Desktop\ShoppingCenter\obj\Debug\net6.0\ShoppingCenter.genruntimeconfig.cache
 C:\Users\SP4-IVC\Desktop\ShoppingCenter\obj\Debug\net6.0\ref\ShoppingCenter.dll
+C:\Users\SP4-IVC\Desktop\ShoppingCenter\bin\Debug\net6.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\SP4-IVC\Desktop\ShoppingCenter\bin\Debug\net6.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\SP4-IVC\Desktop\ShoppingCenter\bin\Debug\net6.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\SP4-IVC\Desktop\ShoppingCenter\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\SP4-IVC\Desktop\ShoppingCenter\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\SP4-IVC\Desktop\ShoppingCenter\bin\Debug\net6.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\SP4-IVC\Desktop\ShoppingCenter\bin\Debug\net6.0\System.IdentityModel.Tokens.Jwt.dll

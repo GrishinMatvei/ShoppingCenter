@@ -1,17 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ShoppingCenter.Database;
 using ShoppingCenter.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using static ShoppingCenter.Program;
 
 namespace ShoppingCenter.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]")]    
     [ApiController]
     public class UserController : ControllerBase
     {
         private readonly ShopContext _context;
         public UserController(ShopContext context) => _context = context;
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetUsers([FromQuery] string? filter)
         {
             var usersQuery = _context.Users.AsQueryable();
@@ -21,6 +27,8 @@ namespace ShoppingCenter.Controllers
         }
         #region HttpPost
         [HttpPost]
+        [Authorize]
+
         public async Task<IActionResult> PostUsers([FromBody] UserDto userDto)
         {
             if (userDto == null) BadRequest();
@@ -37,7 +45,16 @@ namespace ShoppingCenter.Controllers
             if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password)) return BadRequest();
             var userinfo = _context.Users.Where(w => w.Login == login && w.Password == password).SingleOrDefault();
             if (userinfo == null) return BadRequest();
-            return Ok($"{userinfo.Fio}{userinfo.Id}");
+
+            var claims = new List<Claim> { new Claim(ClaimTypes.Name, userinfo.Fio), new Claim("Id", userinfo.Id.ToString()) };
+            var jwt = new JwtSecurityToken(
+                    issuer: AuthOptions.ISSUER,
+                    audience: AuthOptions.AUDIENCE,
+                    claims: claims,
+                    expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(120)),
+                    signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
+
+            return Ok($"Bearer {new JwtSecurityTokenHandler().WriteToken(jwt)}");
         }
         #endregion
     }

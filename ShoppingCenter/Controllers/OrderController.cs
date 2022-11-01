@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShoppingCenter.Database;
 using ShoppingCenter.Models;
+using System.Security.Claims;
 
 namespace ShoppingCenter.Controllers
 {
     [Route("api/Order")]
+    [Authorize]
     [ApiController]
     public class OrderController : ControllerBase
     {
@@ -16,39 +19,47 @@ namespace ShoppingCenter.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetOrders([FromHeader] string? token)
+        public async Task<IActionResult> GetOrders()
         {
-            var userinfo = _context.Users.Where(w => w.Fio + w.Id == token).SingleOrDefault();
-            if (userinfo == null)
-                return Unauthorized();
+            var user = HttpContext.User.Claims.Where(c => c.Type == "Id").FirstOrDefault();
+            if (user == null) return Unauthorized();
 
             var orders = await _context.Orders
-                .Where(w => w.UserId == userinfo.Id)
+                .Where(w => w.UserId == Convert.ToInt32(user.Value))
                 .Select(t => new OrderDto()
                 {
                     Id = t.Id,
                     CreatedDate = t.CreatedDate,
+                    UserId = t.UserId,
                     Number = t.Number,
                     ClientId = t.ClientId,
-                    UserId = t.UserId
-                }).ToListAsync();
+                    ClientName = t.Client.Fio,
+                    UserName = t.User.Fio,
+                    Positions = t.Compositions.Select(p => new OrderCompositionsDto()
+                    {
+                        GoodsId = p.GoodsId,
+                        Count = p.Count,
+                        Price = p.Price,
+                        GoodsName = p.Goods.Name
+                    }).ToList()
+                })
+                .ToListAsync();
             return Ok(orders);
         }
 
 
         [HttpPost]
-        public async Task<IActionResult> PostOrders([FromBody] OrderPostDto orderPostDto, [FromHeader] string token)
+        public async Task<IActionResult> PostOrders([FromBody] OrderPostDto orderPostDto)
         {
-            var userinfo = _context.Users.Where(w => w.Fio + w.Id == token).SingleOrDefault();
-            if (userinfo == null)
-                return Unauthorized();
+            var userinfo = HttpContext.User.Claims.Where(c => c.Type == "Id").FirstOrDefault();
+            if (userinfo == null) return Unauthorized();
 
             var ordernew = new Order()
             {
                 CreatedDate = DateTime.Now,
                 Number = orderPostDto.Number,
                 ClientId = orderPostDto.ClientId,
-                UserId = userinfo.Id
+                UserId = Convert.ToInt32(userinfo.Value)
             };
             _context.Orders.Add(ordernew);
             _context.SaveChanges();
@@ -75,9 +86,9 @@ namespace ShoppingCenter.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> PutOrders([FromBody] OrderPostDto orderPostDto, [FromHeader] string token, [FromQuery] int orderId)
+        public async Task<IActionResult> PutOrders([FromBody] OrderPostDto orderPostDto, [FromQuery] int orderId)
         {
-            var userinfo = _context.Users.Where(w => w.Fio + w.Id == token).SingleOrDefault();
+            var userinfo = HttpContext.User.Claims.Where(c => c.Type == "Id").FirstOrDefault();
             if (userinfo == null)
                 return Unauthorized();
             Order order = await _context.Orders.FirstOrDefaultAsync(x => x.Id == orderId);
@@ -86,7 +97,7 @@ namespace ShoppingCenter.Controllers
 
             foreach (var item in orderPostDto.Positions)
             {
-                OrderComposition poser = _context.Compositions.Where(w => w.Order.User.Id == userinfo.Id).FirstOrDefault();
+                OrderComposition poser = _context.Compositions.Where(w => w.Order.User.Id == Convert.ToInt32(userinfo.Value)).FirstOrDefault();
                 poser.GoodsId = item.GoodsId;
                 poser.Count = item.Count;
             }
@@ -106,11 +117,25 @@ namespace ShoppingCenter.Controllers
             return Ok();
         }
 
+        [HttpDelete]        
+        public async Task<IActionResult> DeleteOrders([FromHeader] int id)
+        {
+            var userinfo = HttpContext.User.Claims.Where(c => c.Type == "Id").FirstOrDefault();
+            if (userinfo == null)
+                return Unauthorized();
+            var order = await _context.Orders.SingleOrDefaultAsync(w => w.Id == id);
+
+            _context.Orders.Remove(order);
+            _context.SaveChanges();
+            return Ok();
+        }
+
+
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetOrder([FromRoute] int id, [FromHeader] string? token)
+        public async Task<IActionResult> GetOrder([FromRoute] int id)
         {
-            var userinfo = _context.Users.Where(w => w.Fio + w.Id == token).SingleOrDefault();
+            var userinfo = HttpContext.User.Claims.Where(c => c.Type == "Id").FirstOrDefault();
             if (userinfo == null)
                 return Unauthorized();
 
